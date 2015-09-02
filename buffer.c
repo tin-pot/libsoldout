@@ -278,6 +278,11 @@ buftoi(struct buf *buf, size_t offset_i, size_t *offset_o) {
 
 
 
+
+#ifdef _MSC_VER
+#define va_copy(_to, _from) ((_to) = (_from))
+#endif
+
 /* vbufprintf • stdarg variant of formatted printing into a buffer */
 void
 vbufprintf(struct buf *buf, const char *fmt, va_list ap) {
