@@ -277,15 +277,18 @@ buftoi(struct buf *buf, size_t offset_i, size_t *offset_o) {
 	return neg ? -r : r; }
 
 
-
-
-#ifdef _MSC_VER
-#define va_copy(_to, _from) ((_to) = (_from))
-#endif
-
 /* vbufprintf • stdarg variant of formatted printing into a buffer */
 void
 vbufprintf(struct buf *buf, const char *fmt, va_list ap) {
+#ifdef _MSC_VER
+	int n;
+	char tmp[1000];
+	n = vsnprintf(tmp, sizeof tmp, fmt, ap);
+	/* MSC vsnprintf() returns -1 if output truncated. */
+	if (n > 0)
+		bufput(buf, tmp, (size_t)n);
+	}
+#else
 	int n;
 	va_list ap_save;
 	if (buf == 0
@@ -302,5 +305,6 @@ vbufprintf(struct buf *buf, const char *fmt, va_list ap) {
 	va_end(ap_save);
 	if (n < 0) return;
 	buf->size += n; }
+#endif
 
 /* vim: set filetype=c: */

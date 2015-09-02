@@ -68,7 +68,7 @@ struct render {
 /* html_tag • structure for quick HTML tag search (inspired from discount) */
 struct html_tag {
 	char *	text;
-	int	size; };
+	size_t	size; };
 
 
 
@@ -1209,7 +1209,7 @@ parse_list(struct buf *ob, struct render *rndr,
 static size_t
 parse_atxheader(struct buf *ob, struct render *rndr,
 			char *data, size_t size) {
-	int level = 0;
+	size_t level = 0;
 	size_t i, end, skip, span_beg, span_size;
 
 	if (!size || data[0] != '#') return 0;
