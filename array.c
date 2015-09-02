@@ -89,7 +89,7 @@ int
 arr_insert(struct array *arr, size_t nb, size_t n) {
 	char *src, *dst;
 	size_t len;
-	if (!arr || nb <= 0 || n < 0
+	if (!arr || nb == 0
 	|| !arr_grow(arr, arr->size + nb))
 		return 0;
 	if (n < arr->size) {
@@ -106,7 +106,7 @@ arr_insert(struct array *arr, size_t nb, size_t n) {
 void *
 arr_item(struct array *arr, size_t no) {
 	char *ptr;
-	if (!arr || no < 0 || no >= arr->size) return 0;
+	if (!arr || no >= arr->size) return 0;
 	ptr = arr->base;
 	ptr += no * arr->unit;
 	return ptr; }
@@ -123,7 +123,7 @@ arr_newitem(struct array *arr) {
 /* arr_remove • removes the n-th elements of the array */
 void
 arr_remove(struct array *arr, size_t idx) {
-	if (!arr || idx < 0 || idx >= arr->size) return;
+	if (!arr || idx >= arr->size) return;
 	arr->size -= 1;
 	if (idx < arr->size) {
 		char *dst = arr->base;
@@ -212,7 +212,7 @@ parr_insert(struct parray *parr, size_t nb, size_t n) {
 	char *src, *dst;
 	size_t i;
 	size_t len;
-	if (!parr || nb <= 0 || n < 0
+	if (!parr || nb == 0
 	|| !parr_grow(parr, parr->size + nb))
 		return 0;
 	if (n < parr->size) {
@@ -249,7 +249,7 @@ void *
 parr_remove(struct parray *arr, size_t idx) {
 	void* ret;
 	size_t i;
-	if (!arr || idx < 0 || idx >= arr->size) return 0;
+	if (!arr || idx >= arr->size) return 0;
 	ret = arr->item[idx];
 	for (i = idx+1; i < arr->size; ++i)
 		arr->item[i - 1] = arr->item[i];
