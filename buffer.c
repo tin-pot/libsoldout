@@ -286,7 +286,7 @@ buftoi(struct buf *buf, size_t offset_i, size_t *offset_o) {
 /* vbufprintf • stdarg variant of formatted printing into a buffer */
 void
 vbufprintf(struct buf *buf, const char *fmt, va_list ap) {
-	int n;
+	size_t n;
 	va_list ap_save;
 	if (buf == 0
 	|| (buf->size >= buf->asize && !bufgrow (buf, buf->size + 1)))

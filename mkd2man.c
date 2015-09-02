@@ -230,7 +230,8 @@ main(int argc, char **argv) {
 	struct buf *ib, *ob;
 	size_t ret;
 	FILE *in = stdin;
-	int ch, argerr, help, i;
+	int ch, argerr, help;
+	size_t i, len;
 	char *tmp;
 	char datebuf[64];
 	time_t ttm;
@@ -314,7 +315,7 @@ main(int argc, char **argv) {
 			*tmp = '\0'; }
 
 	/* Ensure the title is uppercase */
-	for (i = 0; i < strlen(man_metadata.title); i++)
+	for (i = 0, len = strlen(man_metadata.title); i < len; i++)
 		man_metadata.title[i] = toupper(man_metadata.title[i]);
 
 	/* reading everything */

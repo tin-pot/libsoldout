@@ -29,16 +29,16 @@
 /* struct array • generic linear array */
 struct array {
 	void*	base;
-	int	size;
-	int	asize;
+	size_t	size;
+	size_t	asize;
 	size_t	unit; };
 
 
 /* struct parray • array of pointers */
 struct parray {
 	void **	item;
-	int	size;
-	int	asize; };
+	size_t	size;
+	size_t	asize; };
 
 
 /* array_cmp_fn • comparison functions for sorted arrays */
@@ -60,7 +60,7 @@ arr_free(struct array *);
 
 /* arr_grow • increases the array size to fit the given number of elements */
 int
-arr_grow(struct array *, int);
+arr_grow(struct array *, size_t);
 
 /* arr_init • initialization of the contents of the struct */
 void
@@ -68,11 +68,11 @@ arr_init(struct array *, size_t);
 
 /* arr_insert • inserting elements nb before the nth one */
 int
-arr_insert(struct array *, int nb, int n);
+arr_insert(struct array *, size_t nb, size_t n);
 
 /* arr_item • returns a pointer to the n-th element */
 void *
-arr_item(struct array *, int);
+arr_item(struct array *, size_t);
 
 /* arr_newitem • returns the index of a new element appended to the array */
 int
@@ -80,7 +80,7 @@ arr_newitem(struct array *);
 
 /* arr_remove • removes the n-th elements of the array */
 void
-arr_remove(struct array *, int);
+arr_remove(struct array *, size_t);
 
 /* arr_sorted_find • O(log n) search in a sorted array, returning entry */
 /* equivalent to bsearch(key, arr->base, arr->size, arr->unit, cmp) */
@@ -107,7 +107,7 @@ parr_free(struct parray *);
 
 /* parr_grow • increases the array size to fit the given number of elements */
 int
-parr_grow(struct parray *, int);
+parr_grow(struct parray *, size_t);
 
 /* parr_init • initialization of the struct (which is equivalent to zero) */
 void
@@ -115,7 +115,7 @@ parr_init(struct parray *);
 
 /* parr_insert • inserting nb elements before the nth one */
 int
-parr_insert(struct parray *, int nb, int n);
+parr_insert(struct parray *, size_t nb, size_t n);
 
 /* parr_pop • pops the last item of the array and returns it */
 void *
@@ -127,7 +127,7 @@ parr_push(struct parray *, void *);
 
 /* parr_remove • removes the n-th element of the array and returns it */
 void *
-parr_remove(struct parray *, int);
+parr_remove(struct parray *, size_t);
 
 /* parr_sorted_find • O(log n) search in a sorted array, returning entry */
 void *

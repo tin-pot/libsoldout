@@ -27,7 +27,7 @@
 
 /* arr_realloc • realloc memory of a struct array */
 static int
-arr_realloc(struct array* arr, int neosz) {
+arr_realloc(struct array* arr, size_t neosz) {
 	void* neo;
 	neo = realloc(arr->base, neosz * arr->unit);
 	if (neo == 0) return 0;
@@ -39,7 +39,7 @@ arr_realloc(struct array* arr, int neosz) {
 
 /* parr_realloc • realloc memory of a struct parray */
 static int
-parr_realloc(struct parray* arr, int neosz) {
+parr_realloc(struct parray* arr, size_t neosz) {
 	void* neo;
 	neo = realloc(arr->item, neosz * sizeof (void*));
 	if (neo == 0) return 0;
@@ -71,7 +71,7 @@ arr_free(struct array *arr) {
 
 /* arr_grow • increases the array size to fit the given number of elements */
 int
-arr_grow(struct array *arr, int need) {
+arr_grow(struct array *arr, size_t need) {
 	if (arr->asize >= need) return 1;
 	else return arr_realloc(arr, need); }
 
@@ -86,7 +86,7 @@ arr_init(struct array *arr, size_t unit) {
 
 /* arr_insert • inserting nb elements before the nth one */
 int
-arr_insert(struct array *arr, int nb, int n) {
+arr_insert(struct array *arr, size_t nb, size_t n) {
 	char *src, *dst;
 	size_t len;
 	if (!arr || nb <= 0 || n < 0
@@ -104,7 +104,7 @@ arr_insert(struct array *arr, int nb, int n) {
 
 /* arr_item • returns a pointer to the n-th element */
 void *
-arr_item(struct array *arr, int no) {
+arr_item(struct array *arr, size_t no) {
 	char *ptr;
 	if (!arr || no < 0 || no >= arr->size) return 0;
 	ptr = arr->base;
@@ -122,7 +122,7 @@ arr_newitem(struct array *arr) {
 
 /* arr_remove • removes the n-th elements of the array */
 void
-arr_remove(struct array *arr, int idx) {
+arr_remove(struct array *arr, size_t idx) {
 	if (!arr || idx < 0 || idx >= arr->size) return;
 	arr->size -= 1;
 	if (idx < arr->size) {
@@ -153,12 +153,12 @@ arr_sorted_find(struct array *arr, void *key, array_cmp_fn cmp) {
  *      returning index of the smallest element larger than the key */
 int
 arr_sorted_find_i(struct array *arr, void *key, array_cmp_fn cmp) {
-	int mi, ma, cu, ret;
+	int mi, ma, ret;
 	char *ptr = arr->base;
 	mi = -1;
 	ma = arr->size;
 	while (mi < ma - 1) {
-		cu = mi + (ma - mi) / 2;
+		size_t cu = mi + (ma - mi) / 2;
 		ret = cmp(key, ptr + cu * arr->unit);
 		if (ret == 0) {
 			while (cu < arr->size && ret == 0) {
@@ -193,7 +193,7 @@ parr_free(struct parray *arr) {
 
 /* parr_grow • increases the array size to fit the given number of elements */
 int
-parr_grow(struct parray *arr, int need) {
+parr_grow(struct parray *arr, size_t need) {
 	if (arr->asize >= need) return 1;
 	else return parr_realloc (arr, need); }
 
@@ -208,9 +208,10 @@ parr_init(struct parray *arr) {
 
 /* parr_insert • inserting nb elements before the nth one */
 int
-parr_insert(struct parray *parr, int nb, int n) {
+parr_insert(struct parray *parr, size_t nb, size_t n) {
 	char *src, *dst;
-	size_t len, i;
+	size_t i;
+	size_t len;
 	if (!parr || nb <= 0 || n < 0
 	|| !parr_grow(parr, parr->size + nb))
 		return 0;
@@ -245,9 +246,9 @@ parr_push(struct parray *arr, void *i) {
 
 /* parr_remove • removes the n-th element of the array and returns it */
 void *
-parr_remove(struct parray *arr, int idx) {
+parr_remove(struct parray *arr, size_t idx) {
 	void* ret;
-	int i;
+	size_t i;
 	if (!arr || idx < 0 || idx >= arr->size) return 0;
 	ret = arr->item[idx];
 	for (i = idx+1; i < arr->size; ++i)
@@ -275,11 +276,11 @@ parr_sorted_find(struct parray *arr, void *key, array_cmp_fn cmp) {
  *      returning index of the smallest element larger than the key */
 int
 parr_sorted_find_i(struct parray *arr, void *key, array_cmp_fn cmp) {
-	int mi, ma, cu, ret;
+	int mi, ma, ret;
 	mi = -1;
 	ma = arr->size;
 	while (mi < ma - 1) {
-		cu = mi + (ma - mi) / 2;
+		size_t cu = mi + (ma - mi) / 2;
 		ret = cmp(key, arr->item[cu]);
 		if (ret == 0) {
 			while (cu < arr->size && ret == 0) {
