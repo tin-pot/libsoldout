@@ -1,0 +1,98 @@
+Some test results for `mkd2html -c` using examples
+from the CommonMark spec <http://spec.commonmark.org/0.22>.
+
+Examples that do not get rendered correctly, and how:
+
+Example 11: H2 generated.
+
+Example 22: No HR generated.
+
+Example 25: Ho HR generated.
+
+Example 26: Ho HR generated.
+
+Example 29: H1 generated.
+
+Example 40: The `#` gets swallowed.
+
+Example 41: Most `#` gets swallowed.
+
+Example 44: Second group of `#` is reproduced.
+
+Example 47: Indent gets reproduced;
+            Space in front of `-` hides it.
+
+Example 49: Indented `-` is seen as rule, no
+            header recognized.
+
+Example 52: Trailing space gets reproduced.
+
+Example 53: Backslash get swallowed.
+
+Example 55: H2 generated inside blockquote.
+
+Example 56: No HR generated (`---` reproduced).
+
+Example 57: H2 and H1 generated.
+
+Example 59: Empty H1 generated.
+
+Example 61: `----` reproduced inside LI.
+
+Example 63: H2 generated inside BLOCKQUOTE.
+
+Example 71: Leading space is reproduced.
+
+Example 79: Fences not recognized!
+
+Example 105, 106: Unbalanced DIV used as inline.
+
+Example 107: No P generated (block content literal).
+
+Example 110,111,112: DIV not recognized.
+
+Example 116: DIV is put inside P
+
+Example 118,119,120,121: All is put inside P, `*` expanded.
+124,125,126 (pre, script, style) examples OK.
+
+CDATA, DOCTYPE, comment examples all fail.
+
+(...)
+Ex 149,150: No link generated.
+
+Ex 152: OK
+
+Ex 165: Ref def *does* interrupt paragraph.
+
+Ex 167: OK.
+
+Ex 168: No link generated.
+
+Ex 184: H2 gets generated inside BLOCKQUOTE.
+
+Ex 185: Both items inside BLOCKQUOTE.
+
+Ex 192: Blank line *does not* separate BLOCKQUOTEs.
+
+Ex 195: Block quote *does not* interrupt paragraph
+Ex 196: HR inside BLOCKQUOTE, does not interrupt.
+
+Ex 199: Both P end up inside BLOCKQUOTE.
+
+Ex 206: Only one LI generated, then a P.
+
+
+
+
+
+
+
+Examplle 122: DEL is put inside P
+
+
+
+
+
+
+
