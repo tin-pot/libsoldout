@@ -22,7 +22,13 @@
 
 #include <assert.h>
 #include <string.h>
+
+#ifdef _MSC_VER
+#define strcasecmp  _stricmp 
+#define strncasecmp _strnicmp 
+#else
 #include <strings.h> /* for strncasecmp */
+#endif
 
 #define TEXT_UNIT 64	/* unit for the copy of the input buffer */
 #define WORK_UNIT 64	/* block-level working buffer */

@@ -18,7 +18,13 @@
 
 #include "renderers.h"
 
-#include <strings.h>
+#ifdef _MSC_VER
+#include <string.h>
+#define strcasecmp  _stricmp 
+#define strncasecmp _strnicmp 
+#else
+#include <strings.h> /* for strncasecmp */
+#endif
 
 
 /*****************************
