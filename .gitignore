@@ -1,0 +1,10 @@
+*.o
+*.so
+*.so.*
+
+depends/
+*.ncb
+*.suo
+*.user
+Release
+Debug

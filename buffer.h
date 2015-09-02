@@ -40,7 +40,7 @@ struct buf {
  * MACROS *
  **********/
 
-/* CONST_BUF • global buffer from a string litteral */
+/* CONST_BUF • global buffer from a string literal */
 #define CONST_BUF(name, string) \
 	static struct buf name = { string, sizeof string -1, sizeof string }
 
@@ -50,16 +50,16 @@ struct buf {
 	struct buf name = { strname, strlen(strname) }
 
 
-/* BUFPUTSL • optimized bufputs of a string litteral */
-#define BUFPUTSL(output, litteral) \
-	bufput(output, litteral, sizeof litteral - 1)
+/* BUFPUTSL • optimized bufputs of a string literal */
+#define BUFPUTSL(output, literal) \
+	bufput(output, literal, sizeof literal - 1)
 
 
 /***********************
  * FUNCTION ATTRIBUTES *
  ***********************/
 
-/* BUF_ALLOCATOR • the function returns a completely new ponter */
+/* BUF_ALLOCATOR • the function returns a completely new pointer */
 #ifdef __GNUC__
 #define BUF_ALLOCATOR \
 	__attribute__ ((malloc))

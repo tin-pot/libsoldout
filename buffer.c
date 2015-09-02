@@ -46,7 +46,7 @@ size_t buffer_stat_alloc_bytes = 0;
  * STATIC HELPER FUNCTIONS *
  ***************************/
 
-/* lower • retruns the lower-case variant of the input char */
+/* lower • returns the lower-case variant of the input char */
 static char
 lower(char c) {
 	return (c >= 'A' && c <= 'Z') ? (c - 'A' + 'a') : c; }
@@ -277,6 +277,11 @@ buftoi(struct buf *buf, size_t offset_i, size_t *offset_o) {
 	return neg ? -r : r; }
 
 
+
+
+#ifdef _MSC_VER
+#define va_copy(_to, _from) ((_to) = (_from))
+#endif
 
 /* vbufprintf • stdarg variant of formatted printing into a buffer */
 void

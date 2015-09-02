@@ -18,7 +18,7 @@ DEPDIR=depends
 ALLDEPS=$(DEPDIR)/all
 CFLAGS=-c -g -O3 -Wall -Werror -fPIC
 LDFLAGS=-g -O3 -Wall -Werror
-CC=gcc
+CC=cc
 
 all:		libsoldout.so mkd2html mkd2latex mkd2man
 
@@ -54,7 +54,8 @@ benchmark:	benchmark.o libsoldout.so
 
 clean:
 	rm -f *.o
-	rm -f libsoldout.so libsoldout.so.* mkd2html mkd2man benchmark
+	rm -f libsoldout.so libsoldout.so.*
+	rm -f mkd2html mkd2latex mkd2man benchmark
 	rm -rf $(DEPDIR)
 
 

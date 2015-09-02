@@ -22,7 +22,13 @@
 
 #include <assert.h>
 #include <string.h>
+
+#ifdef _MSC_VER
+#define strcasecmp  _stricmp 
+#define strncasecmp _strnicmp 
+#else
 #include <strings.h> /* for strncasecmp */
+#endif
 
 #define TEXT_UNIT 64	/* unit for the copy of the input buffer */
 #define WORK_UNIT 64	/* block-level working buffer */
@@ -230,7 +236,7 @@ is_mail_autolink(char *data, size_t size) {
 	return i + 1; }
 
 
-/* tag_length • returns the length of the given tag, or 0 is it's not valid */
+/* tag_length • returns the length of the given tag, or 0 if it's not valid */
 static size_t
 tag_length(char *data, size_t size, enum mkd_autolink *autolink) {
 	size_t i, j;
@@ -275,7 +281,7 @@ tag_length(char *data, size_t size, enum mkd_autolink *autolink) {
 				? MKDA_EXPLICIT_EMAIL : MKDA_IMPLICIT_EMAIL;
 		return i + j; }
 
-	/* looking for sometinhg looking like a tag end */
+	/* looking for something like a tag end */
 	while (i < size && data[i] != '>') i += 1;
 	if (i >= size) return 0;
 	return i + 1; }
@@ -310,7 +316,7 @@ parse_inline(struct buf *ob, struct render *rndr, char *data, size_t size) {
 		end = action(ob, rndr, data + i, i, size - i);
 		if (!end) /* no action from the callback */
 			end = i + 1;
-		else { 
+		else {
 			i += end;
 			end = i; } } }
 
@@ -377,7 +383,7 @@ find_emph_char(char *data, size_t size, char c) {
 	return 0; }
 
 
-/* parse_emph1 • parsing single emphase */
+/* parse_emph1 • parsing single emphasis */
 /* closed by a symbol not preceded by whitespace and not followed by symbol */
 static size_t
 parse_emph1(struct buf *ob, struct render *rndr,
@@ -410,7 +416,7 @@ parse_emph1(struct buf *ob, struct render *rndr,
 	return 0; }
 
 
-/* parse_emph2 • parsing single emphase */
+/* parse_emph2 • parsing single emphasis */
 static size_t
 parse_emph2(struct buf *ob, struct render *rndr,
 			char *data, size_t size, char c) {
@@ -419,7 +425,7 @@ parse_emph2(struct buf *ob, struct render *rndr,
 	int r;
 
 	if (!rndr->make.double_emphasis) return 0;
-	
+
 	while (i < size) {
 		len = find_emph_char(data + i, size - i, c);
 		if (!len) return 0;
@@ -437,7 +443,7 @@ parse_emph2(struct buf *ob, struct render *rndr,
 	return 0; }
 
 
-/* parse_emph3 • parsing single emphase */
+/* parse_emph3 • parsing single emphasis */
 /* finds the first closing tag, and delegates to the other emph */
 static size_t
 parse_emph3(struct buf *ob, struct render *rndr,
@@ -562,7 +568,7 @@ char_escape(struct buf *ob, struct render *rndr,
 
 
 /* char_entity • '&' escaped when it doesn't belong to an entity */
-/* valid entities are assumed to be anything mathing &#?[A-Za-z0-9]+; */
+/* valid entities are assumed to be anything matching &#?[A-Za-z0-9]+; */
 static size_t
 char_entity(struct buf *ob, struct render *rndr,
 				char *data, size_t offset, size_t size) {
@@ -636,7 +642,7 @@ get_link_inline(struct buf *link, struct buf *title, char *data, size_t size) {
 
 		/* skipping whitespaces after title */
 		title_e = size - 1;
-		while (title_e > title_b && (data[title_e] == ' ' 
+		while (title_e > title_b && (data[title_e] == ' '
 		|| data[title_e] == '\t' || data[title_e] == '\n'))
 			title_e -= 1;
 
@@ -705,7 +711,7 @@ char_link(struct buf *ob, struct render *rndr,
 	struct buf *content = 0;
 	struct buf *link = 0;
 	struct buf *title = 0;
-	int text_has_nl = 0, ret;
+	int ret;
 
 	/* checking whether the correct renderer exists */
 	if ((is_img && !rndr->make.image) || (!is_img && !rndr->make.link))
@@ -713,8 +719,7 @@ char_link(struct buf *ob, struct render *rndr,
 
 	/* looking for the matching closing bracket */
 	for (level = 1; i < size; i += 1)
-		if (data[i] == '\n') text_has_nl = 1;
-		else if (data[i - 1] == '\\') continue;
+		if (data[i - 1] == '\\') continue;
 		else if (data[i] == '[') level += 1;
 		else if (data[i] == ']') {
 			level -= 1;
@@ -765,7 +770,7 @@ char_link(struct buf *ob, struct render *rndr,
 			id_data = data + 1;
 			id_size = txt_e - 1; }
 		else {
-			/* explici id - between brackets */
+			/* explicit id - between brackets */
 			id_data = data + i + 1;
 			id_size = id_end - (i + 1); }
 
@@ -864,7 +869,7 @@ is_headerline(char *data, size_t size) {
 	return 0; }
 
 
-/* is_table_sep • returns wether there is a table separator at the given pos */
+/* is_table_sep • returns whether there is a table separator at the given pos */
 static int
 is_table_sep(char *data, size_t pos) {
 	return data[pos] == '|' && (pos == 0 || data[pos - 1] != '\\'); }
@@ -914,7 +919,7 @@ prefix_quote(char *data, size_t size) {
 	else return 0; }
 
 
-/* prefix_code • returns prefix length for block code*/
+/* prefix_code • returns prefix length for block code */
 static size_t
 prefix_code(char *data, size_t size) {
 	if (size > 0 && data[0] == '\t') return 1;
@@ -959,7 +964,7 @@ static void parse_block(struct buf *ob, struct render *rndr,
 			char *data, size_t size);
 
 
-/* parse_blockquote • hanldes parsing of a blockquote fragment */
+/* parse_blockquote • handles parsing of a blockquote fragment */
 static size_t
 parse_blockquote(struct buf *ob, struct render *rndr,
 			char *data, size_t size) {
@@ -995,7 +1000,7 @@ parse_blockquote(struct buf *ob, struct render *rndr,
 	return end; }
 
 
-/* parse_blockquote • hanldes parsing of a regular paragraph */
+/* parse_blockquote • handles parsing of a regular paragraph */
 static size_t
 parse_paragraph(struct buf *ob, struct render *rndr,
 			char *data, size_t size) {
@@ -1052,7 +1057,7 @@ parse_paragraph(struct buf *ob, struct render *rndr,
 	return end; }
 
 
-/* parse_blockquote • hanldes parsing of a block-level code fragment */
+/* parse_blockquote • handles parsing of a block-level code fragment */
 static size_t
 parse_blockcode(struct buf *ob, struct render *rndr,
 			char *data, size_t size) {
