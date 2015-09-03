@@ -544,7 +544,9 @@ char_codespan(struct buf *ob, struct render *rndr,
 
 	/* real code span */
 	if (f_begin < f_end) {
-		struct buf work = { data + f_begin, f_end - f_begin, 0, 0, 0 };
+                struct buf work = { 0 };
+		work.data = data + f_begin;
+		work.size = f_end - f_begin;
 		if (!rndr->make.codespan(ob, &work, rndr->make.opaque))
 			end = 0; }
 	else {
@@ -600,8 +602,11 @@ char_langle_tag(struct buf *ob, struct render *rndr,
 				char *data, size_t offset, size_t size) {
 	enum mkd_autolink altype = MKDA_NOT_AUTOLINK;
 	size_t end = tag_length(data, size, &altype);
-	struct buf work = { data, end, 0, 0, 0 };
+	struct buf work = { 0 };
 	int ret = 0;
+	
+	work.data = data;
+	work.size = end;
 	if (end) {
 		if (rndr->make.autolink && altype != MKDA_NOT_AUTOLINK) {
 			work.data = data + 1;
@@ -1006,7 +1011,9 @@ parse_paragraph(struct buf *ob, struct render *rndr,
 			char *data, size_t size) {
 	size_t i = 0, end = 0;
 	int level = 0;
-	struct buf work = { data, 0, 0, 0, 0 }; /* volatile working buffer */
+	struct buf work = { 0 };
+	
+	work.data = data; /* volatile working buffer */
 
 	while (i < size) {
 		for (end = i + 1; end < size && data[end - 1] != '\n';
@@ -1270,7 +1277,9 @@ parse_htmlblock(struct buf *ob, struct render *rndr,
 	size_t i, j = 0;
 	struct html_tag *curtag;
 	int found;
-	struct buf work = { data, 0, 0, 0, 0 };
+	struct buf work = { 0 };
+	
+	work.data = data;
 
 	/* identification of the opening tag */
 	if (size < 2 || data[0] != '<') return 0;
