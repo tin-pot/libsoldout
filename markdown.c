@@ -886,17 +886,24 @@ is_fence(char *data, size_t size) {
 /* is_headerline • returns whether the line is a setext-style hdr underline */
 static int
 is_headerline(char *data, size_t size) {
-	size_t i = 0;
+	size_t i;
 
+	for (i = 0; i < size && data[i] != '\n'; ++i)
+		;
+
+	/* skipping initial spaces */
+	if (size < 4) return 0;
+	if (data[++i] == ' ' && data[++i] == ' ' && data[++i] == ' ') ++i;
+	
 	/* test of level 1 header */
 	if (data[i] == '=') {
-		for (i = 1; i < size && data[i] == '='; i += 1);
+		for ( ; i < size && data[i] == '='; i += 1);
 		while (i < size && (data[i] == ' ' || data[i] == '\t')) i += 1;
 		return (i >= size || data[i] == '\n') ? 1 : 0; }
 
 	/* test of level 2 header */
 	if (data[i] == '-') {
-		for (i = 1; i < size && data[i] == '-'; i += 1);
+		for ( ; i < size && data[i] == '-'; i += 1);
 		while (i < size && (data[i] == ' ' || data[i] == '\t')) i += 1;
 		return (i >= size || data[i] == '\n') ? 2 : 0; }
 
@@ -1034,62 +1041,36 @@ parse_blockquote(struct buf *ob, struct render *rndr,
 	return end; }
 
 
-/* parse_blockquote • handles parsing of a regular paragraph */
+/* parse_paragraph • handles parsing of a regular paragraph */
 static size_t
 parse_paragraph(struct buf *ob, struct render *rndr,
 			char *data, size_t size) {
 	size_t i = 0, end = 0;
-	int level = 0;
 	struct buf work = { 0 };
+	struct buf *tmp;
 	
 	work.data = data; /* volatile working buffer */
 
 	while (i < size) {
 		for (end = i + 1; end < size && data[end - 1] != '\n';
 								end += 1);
-		if (is_empty(data + i, size - i)
-		|| (level = is_headerline(data + i, size - i)) != 0)
-			break;
 		if ((i && data[i] == '#')
 		|| is_hrule(data + i, size - i)) {
 			end = i;
 			break; }
+		if (is_empty(data + i, size - i))
+			break;
 		i = end; }
 
 	work.size = i;
 	while (work.size && data[work.size - 1] == '\n')
 		work.size -= 1;
-	if (!level) {
-		struct buf *tmp = new_work_buffer(rndr);
-		parse_inline(tmp, rndr, work.data, work.size);
-		if (rndr->make.paragraph)
-			rndr->make.paragraph(ob, tmp, rndr->make.opaque);
-		release_work_buffer(rndr, tmp); }
-	else {
-		if (work.size) {
-			size_t beg;
-			i = work.size;
-			work.size -= 1;
-			while (work.size && data[work.size] != '\n')
-				work.size -= 1;
-			beg = work.size + 1;
-			while (work.size && data[work.size - 1] == '\n')
-				work.size -= 1;
-			if (work.size) {
-				struct buf *tmp = new_work_buffer(rndr);
-				parse_inline(tmp, rndr, work.data, work.size);
-				if (rndr->make.paragraph)
-					rndr->make.paragraph(ob, tmp,
-							rndr->make.opaque);
-				release_work_buffer(rndr, tmp);
-				work.data += beg;
-				work.size = i - beg; }
-			else work.size = i; }
-		if (rndr->make.header) {
-			struct buf *span = new_work_buffer(rndr);
-			parse_inline(span, rndr, work.data, work.size);
-			rndr->make.header(ob, span, level,rndr->make.opaque);
-			release_work_buffer(rndr, span); } }
+		
+	tmp = new_work_buffer(rndr);
+	parse_inline(tmp, rndr, work.data, work.size);
+	if (rndr->make.paragraph)
+		rndr->make.paragraph(ob, tmp, rndr->make.opaque);
+	release_work_buffer(rndr, tmp);
 	return end; }
 
 
@@ -1311,6 +1292,30 @@ parse_atxheader(struct buf *ob, struct render *rndr,
 		rndr->make.header(ob, span, level, rndr->make.opaque);
 		release_work_buffer(rndr, span); }
 	return skip; }
+	
+	
+/* parse_seheader • parsing of setext-style headers */
+static size_t
+parse_seheader(struct buf *ob, struct render *rndr,
+			char *data, size_t size, int level) {	
+	struct buf work = { 0 };
+	size_t i;
+	
+	work.data = data;
+	
+	for (i = 0; i < size && data[i] != '\n'; ++i)
+		;
+	work.size = i;
+		
+	if (rndr->make.header) {
+		struct buf *span = new_work_buffer(rndr);
+		parse_inline(span, rndr, work.data, work.size);
+		rndr->make.header(ob, span, level,rndr->make.opaque);
+		release_work_buffer(rndr, span); }
+	
+	while (++i < size && data[i] != '\n')
+		;
+	return i; }
 
 
 /* htmlblock_end • checking end of HTML block : </tag>[ \t]*\n[ \t*]\n */
@@ -1606,6 +1611,7 @@ parse_block(struct buf *ob, struct render *rndr,
 	size_t beg, end, i;
 	char *txt_data;
 	char fc;
+	int level;
 	int has_table = (rndr->make.table && rndr->make.table_row
 	    && rndr->make.table_cell);
 
@@ -1635,6 +1641,8 @@ parse_block(struct buf *ob, struct render *rndr,
 			beg += parse_blockquote(ob, rndr, txt_data, end);
 		else if (prefix_code(txt_data, end))
 			beg += parse_blockcode(ob, rndr, txt_data, end);
+		else if ((level = is_headerline(txt_data, end)) != 0)
+			beg += parse_seheader(ob, rndr, txt_data, end, level);
 		else if (prefix_uli(txt_data, end))
 			beg += parse_list(ob, rndr, txt_data, end, 0);
 		else if (prefix_oli(txt_data, end))
