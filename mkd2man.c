@@ -28,6 +28,10 @@
 #include <string.h>
 #include <time.h>
 
+#ifdef _MSC_VER
+#define stat _stat /* MSC uses `_stat()` and `struct _stat` names. */
+#endif
+
 #define READ_UNIT 1024
 #define OUTPUT_UNIT 64
 

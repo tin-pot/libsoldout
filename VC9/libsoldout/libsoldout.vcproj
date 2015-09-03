@@ -43,9 +43,11 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				WarningLevel="3"
+				DisableLanguageExtensions="true"
+				WarningLevel="4"
 				DebugInformationFormat="4"
-				DisableSpecificWarnings="4996"
+				CompileAs="1"
+				DisableSpecificWarnings="4996; 4001"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -102,11 +104,12 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
+				DisableLanguageExtensions="true"
 				WarningLevel="3"
 				DebugInformationFormat="3"
-				DisableSpecificWarnings="4996"
+				CompileAs="1"
+				DisableSpecificWarnings="4996; 4001"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -156,10 +159,42 @@
 			<File
 				RelativePath="..\..\markdown.c"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						DisableSpecificWarnings="4100"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						DisableSpecificWarnings="4100"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\renderers.c"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						DisableSpecificWarnings="4100"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						DisableSpecificWarnings="4100"
+					/>
+				</FileConfiguration>
 			</File>
 		</Filter>
 		<Filter

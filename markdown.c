@@ -544,7 +544,9 @@ char_codespan(struct buf *ob, struct render *rndr,
 
 	/* real code span */
 	if (f_begin < f_end) {
-		struct buf work = { data + f_begin, f_end - f_begin, 0, 0, 0 };
+                struct buf work = { 0 };
+		work.data = data + f_begin;
+		work.size = f_end - f_begin;
 		if (!rndr->make.codespan(ob, &work, rndr->make.opaque))
 			end = 0; }
 	else {
@@ -600,8 +602,11 @@ char_langle_tag(struct buf *ob, struct render *rndr,
 				char *data, size_t offset, size_t size) {
 	enum mkd_autolink altype = MKDA_NOT_AUTOLINK;
 	size_t end = tag_length(data, size, &altype);
-	struct buf work = { data, end, 0, 0, 0 };
+	struct buf work = { 0 };
 	int ret = 0;
+	
+	work.data = data;
+	work.size = end;
 	if (end) {
 		if (rndr->make.autolink && altype != MKDA_NOT_AUTOLINK) {
 			work.data = data + 1;
@@ -849,6 +854,35 @@ is_hrule(char *data, size_t size) {
 	return n >= 3; }
 
 
+/* is_fence • returns whether a line is a code fence */
+static char
+is_fence(char *data, size_t size) {
+	size_t i = 0, n = 0;
+	char c;
+	
+	/* skipping initial spaces */
+	if (size < 3) return 0;
+	if (data[0] == ' ') { i += 1;
+	if (data[1] == ' ') { i += 1;
+	if (data[2] == ' ') { i += 1; } } }
+
+	/* looking at the fence char */
+	if (i + 2 >= size
+	|| (data[i] != '~' && data[i] != '`'))
+		return '\0';
+	c = data[i];
+
+	/* the whole line must be the fence char or whitespace */
+	while (i < size && data[i] == c)
+		++i, ++n;
+	while (i < size && data[i] != '\n') {
+		if (data[i] != ' ' && data[i] != '\t')
+			return '\0';
+		i += 1; }
+
+	return (n >= 3) ? c : '\0'; }
+
+
 /* is_headerline • returns whether the line is a setext-style hdr underline */
 static int
 is_headerline(char *data, size_t size) {
@@ -1006,7 +1040,9 @@ parse_paragraph(struct buf *ob, struct render *rndr,
 			char *data, size_t size) {
 	size_t i = 0, end = 0;
 	int level = 0;
-	struct buf work = { data, 0, 0, 0, 0 }; /* volatile working buffer */
+	struct buf work = { 0 };
+	
+	work.data = data; /* volatile working buffer */
 
 	while (i < size) {
 		for (end = i + 1; end < size && data[end - 1] != '\n';
@@ -1089,6 +1125,46 @@ parse_blockcode(struct buf *ob, struct render *rndr,
 	release_work_buffer(rndr, work);
 	return beg; }
 
+
+/* parse_fencedcode • handles parsing of a fenced code fragment */
+/* TODO (CommonMark):
+ *  1. Check length of closing fence.
+ *  2. Handle "info string" attached to opening fence.
+ */
+static size_t
+parse_fencedcode(struct buf *ob, struct render *rndr,
+			char *data, size_t size, char fc) {
+	size_t beg, end;
+	struct buf *work = new_work_buffer(rndr);
+	
+	/* skip over opening fence line */
+	beg = 0;
+	while (beg < size && data[beg++] != '\n')
+		;
+	
+	/* process block */
+	while (beg < size) {
+		for (end = beg + 1; end < size && data[end - 1] != '\n';
+							end += 1);
+		if (is_fence(data + beg, end - beg) == fc)
+			break;
+		if (beg < end) {
+			if (is_empty(data + beg, end - beg))
+				bufputc(work, '\n');
+			else bufput(work, data + beg, end - beg); }
+		beg = end; }
+	
+	while (work->size && work->data[work->size - 1] == '\n')
+		work->size -= 1;
+	bufputc(work, '\n');
+	if (rndr->make.blockcode)
+		rndr->make.blockcode(ob, work, rndr->make.opaque);
+	release_work_buffer(rndr, work);
+	
+	/* skip over closing fence line */
+	while (beg < size && data[beg++] != '\n')
+		;
+	return beg; }
 
 /* parse_listitem • parsing of a single list item */
 /*	assuming initial prefix is already removed */
@@ -1270,7 +1346,9 @@ parse_htmlblock(struct buf *ob, struct render *rndr,
 	size_t i, j = 0;
 	struct html_tag *curtag;
 	int found;
-	struct buf work = { data, 0, 0, 0, 0 };
+	struct buf work = { 0 };
+	
+	work.data = data;
 
 	/* identification of the opening tag */
 	if (size < 2 || data[0] != '<') return 0;
@@ -1527,6 +1605,7 @@ parse_block(struct buf *ob, struct render *rndr,
 			char *data, size_t size) {
 	size_t beg, end, i;
 	char *txt_data;
+	char fc;
 	int has_table = (rndr->make.table && rndr->make.table_row
 	    && rndr->make.table_cell);
 
@@ -1545,6 +1624,8 @@ parse_block(struct buf *ob, struct render *rndr,
 			beg += i;
 		else if ((i = is_empty(txt_data, end)) != 0)
 			beg += i;
+		else if ((fc = is_fence(txt_data, end)) != '\0')
+			beg += parse_fencedcode(ob, rndr, txt_data, end, fc);
 		else if (is_hrule(txt_data, end)) {
 			if (rndr->make.hrule)
 				rndr->make.hrule(ob, rndr->make.opaque);
