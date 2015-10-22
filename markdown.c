@@ -1229,8 +1229,12 @@ parse_listitem(struct buf *ob, struct render *rndr,
 			parse_block(inter, rndr, work->data, work->size); }
 	else {
 		/* intermediate render of inline li */
+		size_t len1st = sublist;
+		if (len1st > 0 && work->data[len1st-1] == '\n')
+		    len1st--;
+		    
 		if (sublist && sublist < work->size) {
-			parse_inline(inter, rndr, work->data, sublist);
+			parse_inline(inter, rndr, work->data, len1st);
 			parse_block(inter, rndr, work->data + sublist,
 						work->size - sublist); }
 		else

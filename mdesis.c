@@ -18,6 +18,27 @@
 extern long buffer_stat_nb;
 extern size_t buffer_stat_alloc_bytes;
 
+/* ESIS representation in `nsgmls` output format */
+
+static void attribn(struct buf *ob, const char *attr, const char *val,
+                                                      size_t len)
+{
+    bufputc(ob, 'A');
+    bufputs(ob, attr);
+    BUFPUTSL(ob, " CDATA ");
+    bufput(ob, val, len);
+    bufputc(ob, '\n');
+}
+
+static void attrib(struct buf *ob, const char *attr, const char *val)
+{
+    bufputc(ob, 'A');
+    bufputs(ob, attr);
+    BUFPUTSL(ob, " CDATA ");
+    bufputs(ob, val);
+    bufputc(ob, '\n');
+}
+
 static void stag(struct buf *ob, const char *gi)
 {
     bufputc(ob, '(');
@@ -36,10 +57,15 @@ static void cdata(struct buf *ob, char *text, size_t len)
 {
     size_t k;
     
+    if (len == 0) return;
+    
     bufputc(ob, '-');
     for (k = 0; k < len; ++k) {
-	char ch = text[k];
-	if (ch == '\n') {
+	unsigned ch = 0xFF & text[k];
+	if (ch == '\\') {
+	    bufputc(ob, '\\');
+	    bufputc(ob, '\\');
+	} else if (ch == '\n') {
 	    bufputc(ob, '\\');
 	    bufputc(ob, 'n');
 	    bufputc(ob, '\\');
@@ -61,12 +87,14 @@ static void cdata(struct buf *ob, char *text, size_t len)
     bufputc(ob, '\n');
 }
 
+/* Renderers */
+
 static void
 esis_blockcode(struct buf *ob, struct buf *text, void *opaque)
 {
     stag(ob, "pre");
     stag(ob, "code");
-    bufput(ob, text->data, text->size);
+    cdata(ob, text->data, text->size);
     etag(ob, "code");
     etag(ob, "pre");
 }
@@ -84,6 +112,12 @@ esis_blockquote(struct buf *ob, struct buf *text, void *opaque)
 static void
 esis_raw_block(struct buf *ob, struct buf *text, void *opaque)
 {
+    attrib(ob, "mode", "vert");
+    attrib(ob, "notation", "SGML");
+    stag(ob, "mark-up");
+    cdata(ob, text->data, text->size);
+    etag(ob, "mark-up");
+    
     return;
 }
 
@@ -91,35 +125,54 @@ esis_raw_block(struct buf *ob, struct buf *text, void *opaque)
 static void
 esis_header(struct buf *ob, struct buf *text, int level, void *opaque)
 {
-    return;
+    char tag[8];
+    sprintf(tag, "h%d", level);
+    stag(ob, tag);
+    if (text) bufput(ob, text->data, text->size);
+    etag(ob, tag);
 }
 
 
 static void
 esis_hrule(struct buf *ob, void *opaque)
 {
+    const char *tag = "hr";
+    stag(ob, "hr");
+    etag(ob, "hr");
 }
 
 
 static void
 esis_list(struct buf *ob, struct buf *text, int flags, void *opaque)
 {
-    bufputs(ob, (flags & MKD_LIST_ORDERED) ? "(ol" : "(ul");
+    const char *tag = (flags & MKD_LIST_ORDERED) ? "ol" : "ul";
+    stag(ob, tag);
     bufput(ob, text->data, text->size);
-    bufputs(ob, (flags & MKD_LIST_ORDERED) ? ")ol" : ")ul");
+    etag(ob, tag);
 }
 
 
 static void
 esis_listitem(struct buf *ob, struct buf *text, int flags, void *opaque)
 {
-    char *p;
-    
-    for (p = text->data + text->size - 1; *p == 'n'; --p)
-	;
-	
     stag(ob, "li");
-    bufput(ob, text->data, p - text->data);
+    
+    if (text) {
+	if (text->size >= 1 && text->data[text->size-1] == '\n')
+	    text->size -= 1;
+	
+	if (text->size >= 6 &&
+	    memcmp(text->data+text->size-6, "\\n\\012", 6) == 0)
+	    text->size -= 6;
+	    
+        if (text->size >= 2 && 
+	    memcmp(text->data+text->size-2, "\n-", 2) == 0)
+	    text->size -= 2;
+	    
+	bufput(ob, text->data, text->size);
+	bufputc(ob, '\n');
+    }
+    
     etag(ob, "li");
 }
 
@@ -137,6 +190,25 @@ static int
 esis_autolink(struct buf *ob, struct buf *link, enum mkd_autolink type,
 						void *opaque)
 {
+    if (!link || !link->size)
+	return 0;
+	
+    BUFPUTSL(ob, "Ahref CDATA ");
+    if (type == MKDA_IMPLICIT_EMAIL)
+	BUFPUTSL(ob, "mailto:");
+	
+    bufput(ob, link->data, link->size);
+    bufputc(ob, '\n');
+    
+    stag(ob, "a");
+    
+    if (type == MKDA_EXPLICIT_EMAIL && link->size > 7)
+	bufput(ob, link->data + 7, link->size - 7);
+    else
+	bufput(ob, link->data, link->size);
+	
+    etag(ob, "a");
+    
     return 1;
 }
 
@@ -144,6 +216,9 @@ esis_autolink(struct buf *ob, struct buf *link, enum mkd_autolink type,
 static int
 esis_codespan(struct buf *ob, struct buf *text, void *opaque)
 {
+    stag(ob, "code");
+    cdata(ob, text->data, text->size);
+    etag(ob, "code");
     return 1;
 }
 
@@ -151,6 +226,12 @@ esis_codespan(struct buf *ob, struct buf *text, void *opaque)
 static int
 esis_double_emphasis(struct buf *ob, struct buf *text, char c, void *opaque)
 {
+    if (text == NULL || text->size == 0)
+	return 0;
+
+    stag(ob, "strong");
+    bufput(ob, text->data, text->size);
+    etag(ob, "strong");
     return 1;
 }
 
@@ -172,6 +253,18 @@ static int
 esis_image(struct buf *ob, struct buf *link, struct buf *title,
 			struct buf *alt, void *opaque)
 {
+    if (!link || !link->size) return 0;
+    
+    attribn(ob, "src",   link->data,   link->size);
+    
+    if (alt && alt->size)
+	attribn(ob, "alt",   alt->data,    alt->size);
+    
+    if (alt && alt->size)
+	attribn(ob, "title", title->data,  title->size);
+	
+    stag(ob, "img");
+    etag(ob, "img");
     return 1;
 }
 
@@ -179,6 +272,8 @@ esis_image(struct buf *ob, struct buf *link, struct buf *title,
 static int
 esis_linebreak(struct buf *ob, void *opaque)
 {
+    stag(ob, "br");
+    etag(ob, "br");
     return 1;
 }
 
@@ -187,6 +282,19 @@ static int
 esis_link(struct buf *ob, struct buf *link, struct buf *title,
 			struct buf *content, void *opaque)
 {
+    if (link && link->size)
+	attribn(ob, "href", link->data, link->size);
+    
+    if (title && title->size)
+	attribn(ob, "title", title->data, title->size);
+
+    stag(ob, "a");
+    
+    if (content && content->size)
+	bufput(ob, content->data, content->size);
+
+    etag(ob, "a");
+    
     return 1;
 }
 
@@ -194,6 +302,11 @@ esis_link(struct buf *ob, struct buf *link, struct buf *title,
 static int
 esis_raw_inline(struct buf *ob, struct buf *text, void *opaque)
 {
+    attrib(ob, "mode", "horiz");
+    attrib(ob, "notation", "SGML");
+    stag(ob, "mark-up");
+    cdata(ob, text->data, text->size);
+    etag(ob, "mark-up");
     return 1;
 }
 
@@ -201,6 +314,14 @@ esis_raw_inline(struct buf *ob, struct buf *text, void *opaque)
 static int
 esis_triple_emphasis(struct buf *ob, struct buf *text, char c, void *opaque)
 {
+    if (text == NULL || text->size == 0)
+	return 0;
+
+    stag(ob, "strong");
+    stag(ob, "em");
+    bufput(ob, text->data, text->size);
+    etag(ob, "em");
+    etag(ob, "strong");
     return 1;
 }
 
