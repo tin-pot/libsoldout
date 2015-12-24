@@ -18,11 +18,15 @@
 extern long buffer_stat_nb;
 extern size_t buffer_stat_alloc_bytes;
 
+#define BUFBOL(ob) ((ob)->size == 0 || (ob)->data[(ob)->size-1] == '\n')
+#define BUFNEL(ob) do { if (!BUFBOL(ob)) bufputc(ob, '\n'); } while (0) 
+
 /* ESIS representation in `nsgmls` output format */
 
 static void attribn(struct buf *ob, const char *attr, const char *val,
                                                       size_t len)
 {
+    BUFNEL(ob);
     bufputc(ob, 'A');
     bufputs(ob, attr);
     BUFPUTSL(ob, " CDATA ");
@@ -32,6 +36,7 @@ static void attribn(struct buf *ob, const char *attr, const char *val,
 
 static void attrib(struct buf *ob, const char *attr, const char *val)
 {
+    BUFNEL(ob);
     bufputc(ob, 'A');
     bufputs(ob, attr);
     BUFPUTSL(ob, " CDATA ");
@@ -41,6 +46,7 @@ static void attrib(struct buf *ob, const char *attr, const char *val)
 
 static void stag(struct buf *ob, const char *gi)
 {
+    BUFNEL(ob);
     bufputc(ob, '(');
     bufputs(ob, gi);
     bufputc(ob, '\n');
@@ -48,6 +54,7 @@ static void stag(struct buf *ob, const char *gi)
 
 static void etag(struct buf *ob, const char *gi)
 {
+    BUFNEL(ob);
     bufputc(ob, ')');
     bufputs(ob, gi);
     bufputc(ob, '\n');
@@ -59,7 +66,9 @@ static void cdata(struct buf *ob, char *text, size_t len)
     
     if (len == 0) return;
     
-    bufputc(ob, '-');
+    if (BUFBOL(ob)) {
+        bufputc(ob, '-');
+    }
     for (k = 0; k < len; ++k) {
 	unsigned ch = 0xFF & text[k];
 	if (ch == '\\') {
@@ -84,7 +93,7 @@ static void cdata(struct buf *ob, char *text, size_t len)
 	    bufputc(ob, ch);
 	}
     }
-    bufputc(ob, '\n');
+    /* bufputc(ob, '\n'); */
 }
 
 /* Renderers */
@@ -193,6 +202,7 @@ esis_autolink(struct buf *ob, struct buf *link, enum mkd_autolink type,
     if (!link || !link->size)
 	return 0;
 	
+    BUFNEL(ob);
     BUFPUTSL(ob, "Ahref CDATA ");
     if (type == MKDA_IMPLICIT_EMAIL)
 	BUFPUTSL(ob, "mailto:");
@@ -332,6 +342,11 @@ esis_normal_text(struct buf *ob, struct buf *text, void *opaque)
     cdata(ob, text->data, text->size);
 }
 
+static void
+esis_entity(struct buf *ob, struct buf *entity, void *opaque)
+{
+    cdata(ob, entity->data, entity->size);
+}
 
 
 static const struct mkd_renderer mkd_esis = {
@@ -360,7 +375,7 @@ static const struct mkd_renderer mkd_esis = {
     esis_raw_inline,
     esis_triple_emphasis,
 
-    NULL,
+    esis_entity,
     esis_normal_text,
 
     64,
