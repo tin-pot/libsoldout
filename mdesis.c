@@ -302,6 +302,10 @@ esis_link(struct buf *ob, struct buf *link, struct buf *title,
 static int
 esis_raw_inline(struct buf *ob, struct buf *text, void *opaque)
 {
+	/*
+	 * This gets called for tags, markup and comment declarations, and 
+	 * processing instructions.
+	 */
     attrib(ob, "mode", "horiz");
     attrib(ob, "notation", "SGML");
     stag(ob, "mark-up");

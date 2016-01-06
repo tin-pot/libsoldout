@@ -244,8 +244,16 @@ tag_length(char *data, size_t size, enum mkd_autolink *autolink) {
 	/* a valid tag can't be shorter than 3 chars */
 	if (size < 3) return 0;
 
-	/* begins with a '<' optionally followed by '/', followed by letter */
 	if (data[0] != '<') return 0;
+	if (data[1] == '!' || data[1] == '?') {
+		/* markup, comment declaration, or processing instruction */
+		/* looking for something like a tag end */
+		for (i = 2; i < size && data[i] != '>'; ++i)
+			;
+		if (i >= size) return 0;
+		return i + 1; }
+
+	/* begins with a '<' optionally followed by '/', followed by letter */
 	i = (data[1] == '/') ? 2 : 1;
 	if ((data[i] < 'a' || data[i] > 'z')
 	&&  (data[i] < 'A' || data[i] > 'Z')) return 0;
