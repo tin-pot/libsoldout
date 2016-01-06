@@ -76,6 +76,8 @@ struct html_tag {
  * GLOBAL VARIABLES *
  ********************/
 
+static int inlist = 0; /* Suppress heading recognition inside lists. */
+
 /* block_tags • recognised block tags, sorted by cmp_html_tag */
 static struct html_tag block_tags[] = {
 /*0*/	{ "p",		1 },
@@ -1265,6 +1267,8 @@ parse_list(struct buf *ob, struct render *rndr,
 			char *data, size_t size, int flags) {
 	struct buf *work = new_work_buffer(rndr);
 	size_t i = 0, j;
+	
+	++inlist;
 
 	while (i < size) {
 		j = parse_listitem(work, rndr, data + i, size - i, &flags);
@@ -1274,6 +1278,8 @@ parse_list(struct buf *ob, struct render *rndr,
 	if (rndr->make.list)
 		rndr->make.list(ob, work, flags, rndr->make.opaque);
 	release_work_buffer(rndr, work);
+	
+	--inlist;
 	return i; }
 
 
@@ -1620,6 +1626,7 @@ parse_table(struct buf *ob, struct render *rndr, char *data, size_t size) {
 
 
 /* parse_block • parsing of one block, returning next char to parse */
+
 static void
 parse_block(struct buf *ob, struct render *rndr,
 			char *data, size_t size) {
@@ -1638,7 +1645,7 @@ parse_block(struct buf *ob, struct render *rndr,
 	while (beg < size) {
 		txt_data = data + beg;
 		end = size - beg;
-		if (data[beg] == '#')
+		if (!inlist && data[beg] == '#')
 			beg += parse_atxheader(ob, rndr, txt_data, end);
 		else if (data[beg] == '<' && rndr->make.blockhtml
 			&& (i = parse_htmlblock(ob, rndr, txt_data, end)) != 0)
@@ -1647,7 +1654,7 @@ parse_block(struct buf *ob, struct render *rndr,
 			beg += i;
 		else if ((fc = is_fence(txt_data, end)) != '\0')
 			beg += parse_fencedcode(ob, rndr, txt_data, end, fc);
-		else if (is_hrule(txt_data, end)) {
+		else if (!inlist && is_hrule(txt_data, end)) {
 			if (rndr->make.hrule)
 				rndr->make.hrule(ob, rndr->make.opaque);
 			while (beg < size && data[beg] != '\n') beg += 1;
@@ -1656,7 +1663,7 @@ parse_block(struct buf *ob, struct render *rndr,
 			beg += parse_blockquote(ob, rndr, txt_data, end);
 		else if (prefix_code(txt_data, end))
 			beg += parse_blockcode(ob, rndr, txt_data, end);
-		else if ((level = is_headerline(txt_data, end)) != 0)
+		else if (!inlist && (level = is_headerline(txt_data, end)) != 0)
 			beg += parse_seheader(ob, rndr, txt_data, end, level);
 		else if (prefix_uli(txt_data, end))
 			beg += parse_list(ob, rndr, txt_data, end, 0);
