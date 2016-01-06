@@ -1373,8 +1373,8 @@ parse_htmlblock(struct buf *ob, struct render *rndr,
 
 	/* handling of special cases */
 	if (!curtag) {
-		/* HTML comment/markup decl, laxist form */
-		if (size > 5 && data[1] == '!'
+		/* HTML comment/markup decl/PI, laxist form */
+		if (size > 5 && (data[1] == '!' || data[1] == '?')
 		/* && data[2] == '-' && data[3] == '-' */) {
 			i = 2;
 			while (i < size
