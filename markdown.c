@@ -181,7 +181,8 @@ find_block_tag(char *data, size_t size) {
 	if (data[0] == '!' && data[1] == '>') return 0; /* `<!>` is *not* a "block tag" */
 	while (i < size && ((data[i] >= '0' && data[i] <= '9')
 				|| (data[i] >= 'A' && data[i] <= 'Z')
-				|| (data[i] >= 'a' && data[i] <= 'z')))
+				|| (data[i] >= 'a' && data[i] <= 'z')
+				|| data[i] == '-' || data[i] == '.' || data[i] == '_' || data[i] == ':'))
 		i += 1;
 	if (i >= size) return 0;
 
@@ -227,7 +228,7 @@ static size_t
 is_mail_autolink(char *data, size_t size) {
 	size_t i = 0, nb = 0;
 	/* address is assumed to be: [-@._a-zA-Z0-9]+ with exactly one '@' */
-	while (i < size && (data[i] == '-' || data[i] == '.'
+	while (i < size && (data[i] == '-' || data[i] == '.' || data[i] == ':'
 	|| data[i] == '_' || data[i] == '@'
 	|| (data[i] >= 'a' && data[i] <= 'z')
 	|| (data[i] >= 'A' && data[i] <= 'Z')
