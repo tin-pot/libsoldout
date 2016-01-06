@@ -1373,13 +1373,13 @@ parse_htmlblock(struct buf *ob, struct render *rndr,
 
 	/* handling of special cases */
 	if (!curtag) {
-		/* HTML comment, laxist form */
+		/* HTML comment/markup decl, laxist form */
 		if (size > 5 && data[1] == '!'
-		&& data[2] == '-' && data[3] == '-') {
-			i = 5;
+		/* && data[2] == '-' && data[3] == '-' */) {
+			i = 2;
 			while (i < size
-			&& !(data[i - 2] == '-' && data[i - 1] == '-'
-						&& data[i] == '>'))
+			&& !(/*data[i - 2] == '-' && data[i - 1] == '-'
+						&& */ data[i] == '>'))
 				i += 1;
 			i += 1;
 			if (i < size)
