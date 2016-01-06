@@ -175,18 +175,21 @@ cmp_html_tag(const void *a, const void *b) {
 static struct html_tag *
 find_block_tag(char *data, size_t size) {
 	size_t i = 0;
-	struct html_tag key;
+	static struct html_tag key; /* 2016-01-06 mh@tin-pot.net *HACK* */
 
 	/* looking for the word end */
+	if (data[0] == '!' && data[1] == '>') return 0; /* `<!>` is *not* a "block tag" */
 	while (i < size && ((data[i] >= '0' && data[i] <= '9')
 				|| (data[i] >= 'A' && data[i] <= 'Z')
-				|| (data[i] >= 'a' && data[i] <= 'z')))
+				|| (data[i] >= 'a' && data[i] <= 'z')
+				|| data[i] == '-' || data[i] == '.' || data[i] == '_' || data[i] == ':'))
 		i += 1;
 	if (i >= size) return 0;
 
 	/* binary search of the tag */
 	key.text = data;
 	key.size = i;
+	return &key;
 	return bsearch(&key, block_tags,
 				sizeof block_tags / sizeof block_tags[0],
 				sizeof block_tags[0], cmp_html_tag); }
@@ -225,7 +228,7 @@ static size_t
 is_mail_autolink(char *data, size_t size) {
 	size_t i = 0, nb = 0;
 	/* address is assumed to be: [-@._a-zA-Z0-9]+ with exactly one '@' */
-	while (i < size && (data[i] == '-' || data[i] == '.'
+	while (i < size && (data[i] == '-' || data[i] == '.' || data[i] == ':'
 	|| data[i] == '_' || data[i] == '@'
 	|| (data[i] >= 'a' && data[i] <= 'z')
 	|| (data[i] >= 'A' && data[i] <= 'Z')
@@ -244,8 +247,16 @@ tag_length(char *data, size_t size, enum mkd_autolink *autolink) {
 	/* a valid tag can't be shorter than 3 chars */
 	if (size < 3) return 0;
 
-	/* begins with a '<' optionally followed by '/', followed by letter */
 	if (data[0] != '<') return 0;
+	if (data[1] == '!' || data[1] == '?') {
+		/* markup, comment declaration, or processing instruction */
+		/* looking for something like a tag end */
+		for (i = 2; i < size && data[i] != '>'; ++i)
+			;
+		if (i >= size) return 0;
+		return i + 1; }
+
+	/* begins with a '<' optionally followed by '/', followed by letter */
 	i = (data[1] == '/') ? 2 : 1;
 	if ((data[i] < 'a' || data[i] > 'z')
 	&&  (data[i] < 'A' || data[i] > 'Z')) return 0;
@@ -1364,24 +1375,24 @@ parse_htmlblock(struct buf *ob, struct render *rndr,
 	curtag = find_block_tag(data + 1, size - 1);
 
 	/* handling of special cases */
-	if (!curtag) {
-		/* HTML comment, laxist form */
-		if (size > 5 && data[1] == '!'
-		&& data[2] == '-' && data[3] == '-') {
-			i = 5;
+	if (!curtag || data[1] == '?') {
+		/* HTML comment/markup decl/PI, laxist form */
+		if (size > 5 && (data[1] == '!' || data[1] == '?')
+		/* && data[2] == '-' && data[3] == '-' */) {
+			i = 2;
 			while (i < size
-			&& !(data[i - 2] == '-' && data[i - 1] == '-'
-						&& data[i] == '>'))
+			&& !(/*data[i - 2] == '-' && data[i - 1] == '-'
+						&& */ data[i] == '>'))
 				i += 1;
 			i += 1;
 			if (i < size)
 				j = is_empty(data + i, size - i);
 				if (j) {
-					work.size = i + j;
+					work.size = i; /* + j; */
 					if (rndr->make.blockhtml)
 						rndr->make.blockhtml(ob, &work,
 							rndr->make.opaque);
-					return work.size; } }
+					return work.size + j; } }
 
 		/* HR, which is the only self-closing block tag considered */
 		if (size > 4
