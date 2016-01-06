@@ -1385,11 +1385,11 @@ parse_htmlblock(struct buf *ob, struct render *rndr,
 			if (i < size)
 				j = is_empty(data + i, size - i);
 				if (j) {
-					work.size = i + j;
+					work.size = i; /* + j; */
 					if (rndr->make.blockhtml)
 						rndr->make.blockhtml(ob, &work,
 							rndr->make.opaque);
-					return work.size; } }
+					return work.size + j; } }
 
 		/* HR, which is the only self-closing block tag considered */
 		if (size > 4
