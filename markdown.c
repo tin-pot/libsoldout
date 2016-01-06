@@ -175,9 +175,10 @@ cmp_html_tag(const void *a, const void *b) {
 static struct html_tag *
 find_block_tag(char *data, size_t size) {
 	size_t i = 0;
-	struct html_tag key;
+	static struct html_tag key; /* 2016-01-06 mh@tin-pot.net *HACK* */
 
 	/* looking for the word end */
+	if (data[0] == '!' && data[1] == '>') return 0; /* `<!>` is *not* a "block tag" */
 	while (i < size && ((data[i] >= '0' && data[i] <= '9')
 				|| (data[i] >= 'A' && data[i] <= 'Z')
 				|| (data[i] >= 'a' && data[i] <= 'z')))
@@ -187,6 +188,7 @@ find_block_tag(char *data, size_t size) {
 	/* binary search of the tag */
 	key.text = data;
 	key.size = i;
+	return &key;
 	return bsearch(&key, block_tags,
 				sizeof block_tags / sizeof block_tags[0],
 				sizeof block_tags[0], cmp_html_tag); }
