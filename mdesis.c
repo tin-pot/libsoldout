@@ -15,8 +15,10 @@
 
 
 /* buffer statistics, to track some memleaks */
+#ifdef BUFFER_STATS
 extern long buffer_stat_nb;
 extern size_t buffer_stat_alloc_bytes;
+#endif
 
 #define BUFBOL(ob) ((ob)->size == 0 || (ob)->data[(ob)->size-1] == '\n')
 #define BUFNEL(ob) do { if (!BUFBOL(ob)) bufputc(ob, '\n'); } while (0) 
@@ -485,12 +487,14 @@ main(int argc, char **argv) {
 	bufrelease(ob);
 
 	/* memory checks */
+#ifdef BUFFER_STATS
 	if (buffer_stat_nb)
 		fprintf(stderr, "Warning: %ld buffers still active\n",
 				buffer_stat_nb);
 	if (buffer_stat_alloc_bytes)
 		fprintf(stderr, "Warning: %zu bytes still allocated\n",
 				buffer_stat_alloc_bytes);
+#endif
 	return 0; }
 
 /* vim: set filetype=c: */
