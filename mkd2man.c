@@ -233,7 +233,6 @@ int
 main(int argc, char **argv) {
 	struct buf *ib, *ob;
 	size_t ret;
-	size_t i;
 	FILE *in = stdin;
 	int ch, argerr, help;
 	size_t i, len;
