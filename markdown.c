@@ -283,7 +283,7 @@ tag_length(char *data, size_t size, enum mkd_autolink *autolink) {
 		j = i;
 		while (i < size && data[i] != '>' && data[i] != '\''
 		&& data[i] != '"' && data[i] != ' ' && data[i] != '\t'
-		&& data[i] != '\t')
+		&& data[i] != '\n')
 			i += 1;
 		if (i >= size) return 0;
 		if (i > j && data[i] == '>') return i + 1;
@@ -1087,7 +1087,7 @@ parse_paragraph(struct buf *ob, struct render *rndr,
 	return end; }
 
 
-/* parse_blockquote • handles parsing of a block-level code fragment */
+/* parse_blockcode • handles parsing of a block-level code fragment */
 static size_t
 parse_blockcode(struct buf *ob, struct render *rndr,
 			char *data, size_t size) {
@@ -1215,7 +1215,8 @@ parse_listitem(struct buf *ob, struct render *rndr,
 			if (in_empty) has_inside_empty = 1;
 			if (pre == orgpre) /* the following item must have */
 				break;             /* the same indentation */
-			if (!sublist) sublist = work->size; }
+			if (!sublist) sublist = work->size;
+			else if (in_empty) bufputc(work, '\n'); }
 
 		/* joining only indented stuff after empty lines */
 		else if (in_empty && i < 4 && data[beg] != '\t') {
@@ -1391,14 +1392,14 @@ parse_htmlblock(struct buf *ob, struct render *rndr,
 						&& */ data[i] == '>'))
 				i += 1;
 			i += 1;
-			if (i < size)
+			if (i < size) {
 				j = is_empty(data + i, size - i);
 				if (j) {
 					work.size = i; /* + j; */
 					if (rndr->make.blockhtml)
 						rndr->make.blockhtml(ob, &work,
 							rndr->make.opaque);
-					return work.size + j; } }
+					return work.size; } } }
 
 		/* HR, which is the only self-closing block tag considered */
 		if (size > 4
@@ -1482,7 +1483,7 @@ parse_table_row(struct buf *ob, struct render *rndr, char *data, size_t size,
 	struct buf *cells = new_work_buffer(rndr);
 	int align;
 
-	/* skip leading blanks and sperator */
+	/* skip leading blanks and separator */
 	while (i < size && (data[i] == ' ' || data[i] == '\t'))
 		i += 1;
 	if (i < size && data[i] == '|')
@@ -1794,7 +1795,7 @@ is_ref(char *data, size_t beg, size_t end, size_t *last, struct array *refs) {
 void
 markdown(struct buf *ob, struct buf *ib, const struct mkd_renderer *rndrer) {
 	struct link_ref *lr;
-	struct buf *text = bufnew(TEXT_UNIT);
+	struct buf *text;
 	size_t i, beg, end;
 	struct render rndr;
 
@@ -1821,6 +1822,7 @@ markdown(struct buf *ob, struct buf *ib, const struct mkd_renderer *rndrer) {
 	rndr.active_char['&'] = char_entity;
 
 	/* first pass: looking for references, copying everything else */
+	text = bufnew(TEXT_UNIT);
 	beg = 0;
 	while (beg < ib->size) /* iterating over lines */
 		if (is_ref(ib->data, beg, ib->size, &end, &rndr.refs))

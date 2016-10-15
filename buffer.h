@@ -19,6 +19,7 @@
 #ifndef LITHIUM_BUFFER_H
 #define LITHIUM_BUFFER_H
 
+#include <stdarg.h>
 #include <stddef.h>
 
 
@@ -71,7 +72,7 @@ struct buf {
 /* BUF_PRINTF_LIKE • marks the function as behaving like printf */
 #ifdef __GNUC__
 #define BUF_PRINTF_LIKE(format_index, first_variadic_index) \
-	__attribute__ ((format (printf, format_index, first_variadic_index)));
+	__attribute__ ((format (printf, format_index, first_variadic_index)))
 #else
 #define BUF_PRINTF_LIKE(format_index, first_variadic_index)
 #endif
@@ -148,16 +149,22 @@ bufslurp(struct buf *, size_t);
 int
 buftoi(struct buf *, size_t, size_t *);
 
-
-
-#ifdef BUFFER_STDARG
-#include <stdarg.h>
-
 /* vbufprintf • stdarg variant of formatted printing into a buffer */
 void
 vbufprintf(struct buf *, const char*, va_list);
 
-#endif /* def BUFFER_STDARG */
+
+/********************
+ * GLOBAL VARIABLES *
+ ********************/
+
+#ifdef BUFFER_STATS
+
+extern long buffer_stat_nb;
+extern size_t buffer_stat_alloc_bytes;
+
+#endif /* def BUFFER_STATS */
+
 
 #endif /* ndef LITHIUM_BUFFER_H */
 

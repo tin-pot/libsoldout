@@ -33,7 +33,7 @@
 
 /* lus_attr_escape • copy the buffer entity-escaping '<', '>', '&' and '"' */
 void
-lus_attr_escape(struct buf *ob, char *src, size_t size) {
+lus_attr_escape(struct buf *ob, const char *src, size_t size) {
 	size_t  i = 0, org;
 	while (i < size) {
 		/* copying directly unescaped characters */
@@ -54,7 +54,7 @@ lus_attr_escape(struct buf *ob, char *src, size_t size) {
 
 /* lus_body_escape • copy the buffer entity-escaping '<', '>' and '&' */
 void
-lus_body_escape(struct buf *ob, char *src, size_t size) {
+lus_body_escape(struct buf *ob, const char *src, size_t size) {
 	size_t  i = 0, org;
 	while (i < size) {
 		/* copying directly unescaped characters */
@@ -151,9 +151,9 @@ rndr_link(struct buf *ob, struct buf *link, struct buf *title,
 static void
 rndr_list(struct buf *ob, struct buf *text, int flags, void *opaque) {
 	if (ob->size) bufputc(ob, '\n');
-	bufput(ob, flags & MKD_LIST_ORDERED ? "<ol>\n" : "<ul>\n", 5);
+	bufput(ob, (flags & MKD_LIST_ORDERED) ? "<ol>\n" : "<ul>\n", 5);
 	if (text) bufput(ob, text->data, text->size);
-	bufput(ob, flags & MKD_LIST_ORDERED ? "</ol>\n" : "</ul>\n", 6); }
+	bufput(ob, (flags & MKD_LIST_ORDERED) ? "</ol>\n" : "</ul>\n", 6); }
 
 static void
 rndr_listitem(struct buf *ob, struct buf *text, int flags, void *opaque) {
@@ -342,10 +342,11 @@ const struct mkd_renderer mkd_xhtml = {
 static int
 print_link_wxh(struct buf *ob, struct buf *link) {
 	size_t eq, ex, end;
+	if (link->size < 1) return 0;
 	eq = link->size - 1;
 	while (eq > 0 && (link->data[eq - 1] != ' ' || link->data[eq] != '='))
 		eq -= 1;
-	if (eq <= 0) return 0;
+	if (!eq) return 0;
 	ex = eq + 1;
 	while (ex < link->size
 	&& link->data[ex] >= '0' && link->data[ex] <= '9')
@@ -600,7 +601,7 @@ nat_header(struct buf *ob, struct buf *text, int level, void *opaque) {
 			 ||  text->data[i] == '.' || text->data[i] == ':'
 			 || (text->data[i] >= 'a' && text->data[i] <= 'z')
 			 || (text->data[i] >= 'A' && text->data[i] <= 'Z')
-			 || (text->data[i] >= '0' && text->data[i] <= '0')))
+			 || (text->data[i] >= '0' && text->data[i] <= '9')))
 		i += 1;
 	bufprintf(ob, "<h%d", level);
 	if (i < text->size && text->data[i] == '#') {
@@ -624,7 +625,7 @@ nat_paragraph(struct buf *ob, struct buf *text, void *opaque) {
 			/* what is allowed for class names */
 			 || (text->data[i] >= 'a' && text->data[i] <= 'z')
 			 || (text->data[i] >= 'A' && text->data[i] <= 'Z')
-			 || (text->data[i] >= '0' && text->data[i] <= '0')))
+			 || (text->data[i] >= '0' && text->data[i] <= '9')))
 			i += 1;
 		if (i < text->size && text->data[i] == ')') {
 			bufprintf(ob, " class=\"%.*s\"",

@@ -16,15 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*
- * COMPILE TIME OPTIONS
- *
- * BUFFER_STATS • if defined, stats are kept about memory usage
- */
-#define BUFFER_STATS
-
-#define BUFFER_STDARG
-
 #include "buffer.h"
 
 #include <stdio.h>
@@ -35,6 +26,12 @@
 /********************
  * GLOBAL VARIABLES *
  ********************/
+
+/*
+ * COMPILE TIME OPTIONS
+ *
+ * BUFFER_STATS • if defined, stats are kept about memory usage
+ */
 
 #ifdef BUFFER_STATS
 long buffer_stat_nb = 0;
@@ -172,7 +169,6 @@ bufnew(size_t unit) {
 void
 bufnullterm(struct buf *buf) {
 	if (!buf || !buf->unit) return;
-	if (buf->size < buf->asize && buf->data[buf->size] == 0) return;
 	if (buf->size + 1 <= buf->asize || bufgrow(buf, buf->size + 1))
 		buf->data[buf->size] = 0; }
 
@@ -252,7 +248,7 @@ bufset(struct buf **dest, struct buf *src) {
 /* bufslurp • removes a given number of bytes from the head of the array */
 void
 bufslurp(struct buf *buf, size_t len) {
-	if (!buf || !buf->unit || len <= 0) return;
+	if (!buf || !buf->unit || !len) return;
 	if (len >= buf->size) {
 		buf->size = 0;
 		return; }

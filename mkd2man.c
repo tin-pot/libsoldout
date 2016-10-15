@@ -42,10 +42,10 @@
 
 /* usage • print the option list */
 
-void
+static void
 usage(FILE *out, const char *name) {
-	fprintf(out, "Usage: %s [-h] [-d <date>] [-s <section> ] [ -t <title> ] [input-file]\n\n",
-	    name);
+	fprintf(out, "Usage: %s [-h] [-d <date>] [-s <section> ] "
+	    "[ -t <title> ] [input-file]\n\n", name);
 	fprintf(out, "\t-d, --date\n"
 	    "\t\tSet the date of the manpage (default: now),\n"
 	    "\t-h, --help\n"
@@ -55,11 +55,11 @@ usage(FILE *out, const char *name) {
 	    "\t-t, --title\n"
 	    "\t\tSet the title of the manpage (default: filename)\n"); }
 
-static struct metadata {
+struct metadata {
 	char *title;
 	char *date;
 	int section;
-} man_metadata;
+};
 
 static void
 man_text_escape(struct buf *ob, char *src, size_t size) {
@@ -184,7 +184,7 @@ man_normal_text(struct buf *ob, struct buf *text, void *opaque) {
 
 
 /* renderer structure */
-struct mkd_renderer to_man = {
+static struct mkd_renderer to_man = {
 	/* document-level callbacks */
 	man_prolog,
 	man_epilog,
@@ -233,6 +233,7 @@ int
 main(int argc, char **argv) {
 	struct buf *ib, *ob;
 	size_t ret;
+	size_t i;
 	FILE *in = stdin;
 	int ch, argerr, help;
 	size_t i, len;
@@ -241,10 +242,11 @@ main(int argc, char **argv) {
 	time_t ttm;
 	struct tm *tm;
 	struct stat st;
+	struct metadata man_metadata;
 
 	struct option longopts[] = {
-		{ "date",	no_argument,		0, 	'd' },
-		{ "help",	required_argument,	0,	'h' },
+		{ "date",	required_argument,	0, 	'd' },
+		{ "help",	no_argument,		0,	'h' },
 		{ "section",	required_argument,	0,	's' },
 		{ "title",	required_argument,	0,	't' },
 		{ 0,		0,			0,	0}
@@ -269,7 +271,8 @@ main(int argc, char **argv) {
 				    strspn(optarg, "123456789") != 1) {
 					argerr = 1;
 					break; }
-				man_metadata.section = (int)strtol(optarg, (char **)NULL, 10);
+				man_metadata.section = (int)strtol(optarg,
+				    (char **)NULL, 10);
 				break;
 			case 't':
 				man_metadata.title = optarg;
@@ -288,8 +291,8 @@ main(int argc, char **argv) {
 		in = fopen(argv[0], "r");
 		if (!in) {
 			fprintf(stderr,"Unable to open input file \"%s\": %s\n",
-				argv[1], strerror(errno));
-			return 1; } }
+				argv[0], strerror(errno));
+			return EXIT_FAILURE; } }
 
 	if (!man_metadata.date) {
 			if (in == stdin || stat(argv[0], &st) == -1) {
@@ -304,7 +307,7 @@ main(int argc, char **argv) {
 	if (in == stdin && !man_metadata.title) {
 		fprintf(stderr, "When reading from stdin the title should be "
 		    "specified is expected\n");
-		return 1; }
+		return EXIT_FAILURE; }
 
 	if (!man_metadata.title) {
 		tmp = strrchr(argv[0], '/');
@@ -347,6 +350,6 @@ main(int argc, char **argv) {
 	/* cleanup */
 	bufrelease(ib);
 	bufrelease(ob);
-	return 0; }
+	return EXIT_SUCCESS; }
 
 /* vim: set filetype=c: */
