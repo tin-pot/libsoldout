@@ -192,9 +192,9 @@ find_block_tag(char *data, size_t size) {
 	key.text = data;
 	key.size = i;
 	return &key;
-	return bsearch(&key, block_tags,
+	/* return bsearch(&key, block_tags,
 				sizeof block_tags / sizeof block_tags[0],
-				sizeof block_tags[0], cmp_html_tag); }
+				sizeof block_tags[0], cmp_html_tag); */ }
 
 
 /* new_work_buffer • get a new working buffer from the stack or create one */
@@ -260,6 +260,10 @@ tag_length(char *data, size_t size, enum mkd_autolink *autolink) {
 
 	/* begins with a '<' optionally followed by '/', followed by letter */
 	i = (data[1] == '/') ? 2 : 1;
+	
+	/* recognize empty start or end tag */
+	if (data[i] == '>') return i + 1;
+	
 	if ((data[i] < 'a' || data[i] > 'z')
 	&&  (data[i] < 'A' || data[i] > 'Z')) return 0;
 
@@ -295,7 +299,8 @@ tag_length(char *data, size_t size, enum mkd_autolink *autolink) {
 		return i + j; }
 
 	/* looking for something like a tag end */
-	while (i < size && data[i] != '>') i += 1;
+	while (i < size && data[i] != '>' && data[i] != '/') i += 1;
+	if (data[i] == '/' && data[i+1] == '>') ++i;
 	if (i >= size) return 0;
 	return i + 1; }
 
