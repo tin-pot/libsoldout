@@ -1,24 +1,24 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libsoldout", "libsoldout.vcproj", "{71BF83BE-63DA-46FF-B8E7-7864F9897615}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libsoldout", "libsoldout\libsoldout.vcproj", "{71BF83BE-63DA-46FF-B8E7-7864F9897615}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mkd2html", "..\mkd2html\mkd2html.vcproj", "{8B220CB0-F019-4DC4-905D-1A509287FD09}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mkd2html", "mkd2html\mkd2html.vcproj", "{8B220CB0-F019-4DC4-905D-1A509287FD09}"
 	ProjectSection(ProjectDependencies) = postProject
 		{71BF83BE-63DA-46FF-B8E7-7864F9897615} = {71BF83BE-63DA-46FF-B8E7-7864F9897615}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mkd2latex", "..\mkd2latex\mkd2latex.vcproj", "{1D18E58A-E3A7-4C4A-86DB-51A686F03846}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mkd2latex", "mkd2latex\mkd2latex.vcproj", "{1D18E58A-E3A7-4C4A-86DB-51A686F03846}"
 	ProjectSection(ProjectDependencies) = postProject
 		{71BF83BE-63DA-46FF-B8E7-7864F9897615} = {71BF83BE-63DA-46FF-B8E7-7864F9897615}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mkd2man", "..\mkd2man\mkd2man.vcproj", "{FF3C2B2B-9A38-47E0-81B0-A812F2C27039}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mkd2man", "mkd2man\mkd2man.vcproj", "{FF3C2B2B-9A38-47E0-81B0-A812F2C27039}"
 	ProjectSection(ProjectDependencies) = postProject
 		{71BF83BE-63DA-46FF-B8E7-7864F9897615} = {71BF83BE-63DA-46FF-B8E7-7864F9897615}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mdesis", "..\mdesis\mdesis.vcproj", "{4E68000C-CDD0-4A55-AE07-CB4337C87DE8}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mdesis", "mdesis\mdesis.vcproj", "{4E68000C-CDD0-4A55-AE07-CB4337C87DE8}"
 	ProjectSection(ProjectDependencies) = postProject
 		{71BF83BE-63DA-46FF-B8E7-7864F9897615} = {71BF83BE-63DA-46FF-B8E7-7864F9897615}
 	EndProjectSection
