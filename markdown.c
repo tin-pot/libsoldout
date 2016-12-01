@@ -1387,7 +1387,7 @@ parse_htmlblock(struct buf *ob, struct render *rndr,
 	curtag = find_block_tag(data + 1, size - 1);
 
 	/* handling of special cases */
-	if (!curtag || data[1] == '?') {
+	if (!curtag || data[1] == '!' || data[1] == '?') {
 		/* HTML comment/markup decl/PI, laxist form */
 		if (size > 5 && (data[1] == '!' || data[1] == '?')
 		/* && data[2] == '-' && data[3] == '-' */) {
