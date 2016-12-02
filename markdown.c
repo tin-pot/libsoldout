@@ -874,7 +874,7 @@ is_hrule(char *data, size_t size) {
 
 /* is_fence • returns whether a line is a code fence */
 static char
-is_fence(char *data, size_t size) {
+is_fence(char *data, size_t size, char **pinfo, size_t *pinfosz) {
 	size_t i = 0, n = 0;
 	char c;
 	
@@ -890,15 +890,30 @@ is_fence(char *data, size_t size) {
 		return '\0';
 	c = data[i];
 
-	/* the whole line must be the fence char or whitespace */
+	/* count fence characters */
 	while (i < size && data[i] == c)
 		++i, ++n;
-	while (i < size && data[i] != '\n') {
-		if (data[i] != ' ' && data[i] != '\t')
-			return '\0';
-		i += 1; }
+        /* at least 3 fence characters are needed */
+        if (n < 3) return '\0';
 
-	return (n >= 3) ? c : '\0'; }
+        /* skip over WS, collect info string if any */
+	for (; i < size && data[i] != '\n'; ++i)
+                if (data[i] != ' ' && data[i] != '\t')
+                        break;
+        if (i < size && data[i] != '\n') {
+                /* info string */
+                if (pinfo == NULL || pinfosz == NULL) return '\0';
+                *pinfo = data + i;
+                while (i < size && data[i] != '\n')
+                    ++i;
+                while (data[i-1] == ' ' || data[i-1] == '\t')
+                    --i;
+                *pinfosz = (size_t)(data + i - *pinfo); }
+        else if (pinfo != NULL && pinfosz != NULL) {
+                *pinfo = NULL;
+                *pinfosz = 0U; }
+
+	return c; }
 
 
 /* is_headerline • returns whether the line is a setext-style hdr underline */
@@ -1120,7 +1135,7 @@ parse_blockcode(struct buf *ob, struct render *rndr,
 		work->size -= 1;
 	bufputc(work, '\n');
 	if (rndr->make.blockcode)
-		rndr->make.blockcode(ob, work, rndr->make.opaque);
+		rndr->make.blockcode(ob, work, NULL, 0U, rndr->make.opaque);
 	release_work_buffer(rndr, work);
 	return beg; }
 
@@ -1132,7 +1147,8 @@ parse_blockcode(struct buf *ob, struct render *rndr,
  */
 static size_t
 parse_fencedcode(struct buf *ob, struct render *rndr,
-			char *data, size_t size, char fc) {
+			char *data, size_t size, char fc,
+                        char *info, size_t infosz) {
 	size_t beg, end;
 	struct buf *work = new_work_buffer(rndr);
 	
@@ -1145,7 +1161,7 @@ parse_fencedcode(struct buf *ob, struct render *rndr,
 	while (beg < size) {
 		for (end = beg + 1; end < size && data[end - 1] != '\n';
 							end += 1);
-		if (is_fence(data + beg, end - beg) == fc)
+		if (is_fence(data + beg, end - beg, NULL, NULL) == fc)
 			break;
 		if (beg < end) {
 			if (is_empty(data + beg, end - beg))
@@ -1157,7 +1173,7 @@ parse_fencedcode(struct buf *ob, struct render *rndr,
 		work->size -= 1;
 	bufputc(work, '\n');
 	if (rndr->make.blockcode)
-		rndr->make.blockcode(ob, work, rndr->make.opaque);
+		rndr->make.blockcode(ob, work, info, infosz, rndr->make.opaque);
 	release_work_buffer(rndr, work);
 	
 	/* skip over closing fence line */
@@ -1649,6 +1665,8 @@ parse_block(struct buf *ob, struct render *rndr,
 
 	beg = 0;
 	while (beg < size) {
+                char *info;
+                size_t infosz = 0;
 		txt_data = data + beg;
 		end = size - beg;
 		if (!inlist && data[beg] == '#')
@@ -1658,8 +1676,8 @@ parse_block(struct buf *ob, struct render *rndr,
 			beg += i;
 		else if ((i = is_empty(txt_data, end)) != 0)
 			beg += i;
-		else if ((fc = is_fence(txt_data, end)) != '\0')
-			beg += parse_fencedcode(ob, rndr, txt_data, end, fc);
+		else if ((fc = is_fence(txt_data, end, &info, &infosz)) != '\0')
+			beg += parse_fencedcode(ob, rndr, txt_data, end, fc, info, infosz);
 		else if (!inlist && is_hrule(txt_data, end)) {
 			if (rndr->make.hrule)
 				rndr->make.hrule(ob, rndr->make.opaque);

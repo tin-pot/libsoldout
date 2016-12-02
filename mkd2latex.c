@@ -239,7 +239,7 @@ latex_image(struct buf *ob, struct buf *link, struct buf *title,
 	return 1; }
 
 static void
-latex_blockcode(struct buf *ob, struct buf *text, void *opaque) {
+latex_blockcode(struct buf *ob, struct buf *text, char *info, size_t infosz, void *opaque) {
 	if (ob->size) bufputc(ob, '\n');
 	BUFPUTSL(ob, "\\begin{verbatim}\n");
 	if (text) bufput(ob, text->data, text->size);

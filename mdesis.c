@@ -112,9 +112,10 @@ static void entref(struct buf *ob, char *text, size_t len)
 /* Renderers */
 
 static void
-esis_blockcode(struct buf *ob, struct buf *text, void *opaque)
+esis_blockcode(struct buf *ob, struct buf *text, char *info, size_t infosz, void *opaque)
 {
     stag(ob, "pre");
+    if (infosz > 0) attribn(ob, "title", info, infosz);
     stag(ob, "code");
     cdata(ob, text->data, text->size);
     etag(ob, "code");

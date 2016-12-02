@@ -94,7 +94,7 @@ man_epilog(struct buf *ob, void *opaque) {
 		BUFPUTSL(ob, "\n"); }
 
 static void
-man_blockcode(struct buf *ob, struct buf *text, void *opaque) {
+man_blockcode(struct buf *ob, struct buf *text, char *info, size_t infosz, void *opaque) {
 	if (ob->size) bufputc(ob, '\n');
 	BUFPUTSL(ob, ".Bd -literal\n");
 	if (text) man_text_escape(ob, text->data, text->size);

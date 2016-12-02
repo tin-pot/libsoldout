@@ -92,7 +92,7 @@ rndr_autolink(struct buf *ob, struct buf *link, enum mkd_autolink type,
 	return 1; }
 
 static void
-rndr_blockcode(struct buf *ob, struct buf *text, void *opaque) {
+rndr_blockcode(struct buf *ob, struct buf *text, char *info, size_t infosz, void *opaque) {
 	if (ob->size) bufputc(ob, '\n');
 	BUFPUTSL(ob, "<pre><code>");
 	if (text) lus_body_escape(ob, text->data, text->size);
