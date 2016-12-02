@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #define READ_UNIT 1024
 #define OUTPUT_UNIT 64
@@ -33,7 +34,7 @@ static void attribn(struct buf *ob, const char *attr, const char *val,
     bufputs(ob, attr);
     BUFPUTSL(ob, " CDATA ");
     bufput(ob, val, len);
-    bufputc(ob, '\n');
+    BUFNEL(ob);
 }
 
 static void attrib(struct buf *ob, const char *attr, const char *val)
@@ -43,7 +44,7 @@ static void attrib(struct buf *ob, const char *attr, const char *val)
     bufputs(ob, attr);
     BUFPUTSL(ob, " CDATA ");
     bufputs(ob, val);
-    bufputc(ob, '\n');
+    BUFNEL(ob);
 }
 
 static void stag(struct buf *ob, const char *gi)
@@ -51,7 +52,7 @@ static void stag(struct buf *ob, const char *gi)
     BUFNEL(ob);
     bufputc(ob, '(');
     bufputs(ob, gi);
-    bufputc(ob, '\n');
+    BUFNEL(ob);
 }
 
 static void etag(struct buf *ob, const char *gi)
@@ -59,7 +60,7 @@ static void etag(struct buf *ob, const char *gi)
     BUFNEL(ob);
     bufputc(ob, ')');
     bufputs(ob, gi);
-    bufputc(ob, '\n');
+    BUFNEL(ob);
 }
 
 static void cdata(struct buf *ob, char *text, size_t len)
@@ -96,6 +97,16 @@ static void cdata(struct buf *ob, char *text, size_t len)
 	}
     }
     /* bufputc(ob, '\n'); */
+}
+
+static void entref(struct buf *ob, char *text, size_t len)
+{
+    if (len == 0) return;
+
+    BUFNEL(ob);
+    bufputc(ob, '&');
+    bufput(ob, text, len);
+    BUFNEL(ob);
 }
 
 /* Renderers */
@@ -351,7 +362,9 @@ esis_normal_text(struct buf *ob, struct buf *text, void *opaque)
 static void
 esis_entity(struct buf *ob, struct buf *entity, void *opaque)
 {
-    cdata(ob, entity->data, entity->size);
+    assert(entity->data[0] == '&');
+    assert(entity->size > 2);
+    entref(ob, entity->data+1, entity->size-2);
 }
 
 
