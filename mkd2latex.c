@@ -366,7 +366,7 @@ static struct mkd_renderer to_latex = {
 	/* block-level callbacks */
 	latex_blockcode,
 	latex_blockquote,
-	latex_blockcode,
+	NULL, /* latex_blockcode, */ /* HTML */
 	latex_header,
 	latex_hrule,
 	latex_list,
