@@ -299,8 +299,9 @@ tag_length(char *data, size_t size, enum mkd_autolink *autolink) {
 		return i + j; }
 
 	/* looking for something like a tag end */
-	while (i < size && data[i] != '>' && data[i] != '/') i += 1;
+	while (i < size && data[i] != '>' && data[i] != '/' && data[i] != '<') i += 1;
 	if (data[i] == '/' && data[i+1] == '>') ++i;
+	else if (data[i] == '<') --i; /* unclosed start or end tag */
 	if (i >= size) return 0;
 	return i + 1; }
 
