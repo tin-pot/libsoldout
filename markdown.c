@@ -594,22 +594,27 @@ static size_t
 char_entity(struct buf *ob, struct render *rndr,
 				char *data, size_t offset, size_t size) {
 	size_t end = 1;
+	char *name = data + 1;
+	size_t nmlen;
 	struct buf work;
 	if (end < size && data[end] == '#') end += 1;
 	while (end < size
-	&& ((data[end] >= '0' && data[end] <= '9')
-	||  (data[end] >= 'a' && data[end] <= 'z')
-	||  (data[end] >= 'A' && data[end] <= 'Z')))
+	        && ((data[end] >= '0' && data[end] <= '9')
+	        ||  (data[end] >= 'a' && data[end] <= 'z')
+	        ||  (data[end] >= 'A' && data[end] <= 'Z')))
 		end += 1;
-	if (end < size && data[end] == ';') {
+	
+	if ((nmlen = end - 1) > (size_t)(name[0] == '#')) {
 		/* real entity */
-		end += 1; }
+		if (data[end] == ';' || data[end] == '\n')
+		++end;
+		}
 	else {
 		/* lone '&' */
 		return 0; }
 	if (rndr->make.entity) {
-		work.data = data;
-		work.size = end;
+		work.data = name;
+		work.size = nmlen;
 		rndr->make.entity(ob, &work, rndr->make.opaque); }
 	else bufput(ob, data, end);
 	return end; }
