@@ -846,7 +846,7 @@ is_empty(char *data, size_t size) {
 
 
 /* is_hrule • returns whether a line is a horizontal rule */
-static int
+static size_t
 is_hrule(char *data, size_t size) {
 	size_t i = 0, n = 0;
 	char c;
@@ -870,7 +870,7 @@ is_hrule(char *data, size_t size) {
 			return 0;
 		i += 1; }
 
-	return n >= 3; }
+	return (n >= 3) ? i : 0; }
 
 
 /* is_fence • returns whether a line is a code fence */
@@ -1679,11 +1679,10 @@ parse_block(struct buf *ob, struct render *rndr,
 			beg += i;
 		else if ((fc = is_fence(txt_data, end, &info, &infosz)) != '\0')
 			beg += parse_fencedcode(ob, rndr, txt_data, end, fc, info, infosz);
-		else if (!inlist && is_hrule(txt_data, end)) {
+		else if (!inlist && (i = is_hrule(txt_data, end)) != 0) {
 			if (rndr->make.hrule)
 				rndr->make.hrule(ob, rndr->make.opaque);
-			while (beg < size && data[beg] != '\n') beg += 1;
-			beg += 1; }
+				beg += i; }
 		else if (prefix_quote(txt_data, end))
 			beg += parse_blockquote(ob, rndr, txt_data, end);
 		else if (prefix_code(txt_data, end))
