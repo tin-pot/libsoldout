@@ -232,6 +232,12 @@ html_linebreak(struct buf *ob, void *opaque) {
 	BUFPUTSL(ob, "<br>\n");
 	return 1; }
 
+static int
+html_entity(struct buf *ob, struct buf *ent, void *opaque) {
+        bufputc(ob, '&');
+        bufput(ob, ent->data, ent->size);
+        bufputc(ob, ';');
+        return 1; }
 
 /* exported renderer structure */
 const struct mkd_renderer mkd_html = {
@@ -260,7 +266,7 @@ const struct mkd_renderer mkd_html = {
 	rndr_raw_inline,
 	rndr_triple_emphasis,
 
-	NULL,
+	html_entity,
 	rndr_normal_text,
 
 	64,

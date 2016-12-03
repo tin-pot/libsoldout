@@ -363,9 +363,8 @@ esis_normal_text(struct buf *ob, struct buf *text, void *opaque)
 static void
 esis_entity(struct buf *ob, struct buf *entity, void *opaque)
 {
-    assert(entity->data[0] == '&');
-    assert(entity->size > 2);
-    entref(ob, entity->data+1, entity->size-2);
+    assert(entity->size > 0);
+    entref(ob, entity->data, entity->size);
 }
 
 
